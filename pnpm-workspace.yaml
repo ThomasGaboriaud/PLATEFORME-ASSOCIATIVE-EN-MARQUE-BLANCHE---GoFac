@@ -1,0 +1,25 @@
+packages:
+  - apps/*
+  - packages/*
+
+# React Native / Expo fonctionne mieux avec des dépendances « à plat ».
+nodeLinker: hoisted
+
+# Paquets autorisés (true) ou non (false) à exécuter des scripts d'installation.
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  esbuild: true
+  prisma: true
+  sharp: false
+  unrs-resolver: false
+
+minimumReleaseAgeExclude:
+  - '@expo/cli@58.1.21'
+  - '@expo/metro-config@58.0.23'
+  - '@expo/router-server@58.0.23'
+  - babel-preset-expo@58.0.26
+  - expo-file-system@58.0.14
+  - expo@58.0.26
+  - jest-expo@58.0.15

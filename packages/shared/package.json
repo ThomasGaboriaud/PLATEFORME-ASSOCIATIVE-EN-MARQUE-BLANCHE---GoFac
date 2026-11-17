@@ -1,0 +1,17 @@
+{
+  "name": "@gofac/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Types et constantes partagés entre l'API, le site web et l'application mobile.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}

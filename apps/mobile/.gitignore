@@ -1,0 +1,13 @@
+# Spécifique à Expo (le reste est dans le .gitignore racine)
+web-build/
+expo-env.d.ts
+.kotlin/
+*.orig.*
+*.p8
+*.p12
+*.key
+*.pem
+.metro-health-check*
+.env*.local
+/ios
+/android
