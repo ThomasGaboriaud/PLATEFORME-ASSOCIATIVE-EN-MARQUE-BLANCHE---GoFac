@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+dist
+build
+.next
+.expo
+coverage
+apps/mobile/android
+apps/mobile/ios
+CHANGELOG.md

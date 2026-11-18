@@ -1,0 +1,5 @@
+# Spécifique à Next.js (le reste est dans le .gitignore racine)
+/.next/
+/out/
+next-env.d.ts
+.vercel

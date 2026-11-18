@@ -1,0 +1,132 @@
+// Schéma de la base de données : tables du SOCLE.
+// Le schéma global (toutes les entités) est décrit dans docs/technical/data-model.md.
+// Chaque module ajoute ses tables ici, dans sa propre section, via une pull request.
+//
+// Rappel : une installation = une association (voir docs/adr/0003-une-installation-par-association.md).
+// Il n'y a donc pas de colonne "associationId" dans les tables.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Socle : configuration de l'installation
+// ─────────────────────────────────────────────
+
+/// Réglages de l'association (une seule ligne). Rempli par l'assistant d'installation.
+model Settings {
+  id           Int       @id @default(1)
+  name         String
+  contactEmail String
+  phone        String?
+  address      String?
+  installedAt  DateTime?
+  updatedAt    DateTime  @updatedAt
+}
+
+/// Modules activables depuis l'administration.
+model Module {
+  key       String   @id // ex. "memberships", "events", "payments", "planning", "rooms", "inventory"
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Socle : personnes, équipes, rôles
+// ─────────────────────────────────────────────
+
+/// Une personne de l'association. Le compte (email + mot de passe) est optionnel :
+/// un membre importé par CSV peut ne pas encore avoir activé son compte.
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String?
+  firstName    String
+  lastName     String
+  phone        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime? // suppression logique (RGPD : purge après la durée de conservation)
+
+  teams           TeamMember[]
+  roleAssignments RoleAssignment[]
+  sessions        Session[]
+  auditLogs       AuditLog[]
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  members         TeamMember[]
+  roleAssignments RoleAssignment[]
+}
+
+/// Un membre peut appartenir à plusieurs équipes.
+model TeamMember {
+  userId   String
+  teamId   String
+  joinedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([userId, teamId])
+}
+
+/// Rôle configurable (président, trésorier, responsable d'équipe, membre…).
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  /// Liste des permissions, ex. ["members.read", "events.write"].
+  permissions String[]
+  isSystem    Boolean  @default(false) // rôles créés à l'installation, non supprimables
+
+  assignments RoleAssignment[]
+}
+
+/// Attribution d'un rôle à une personne, sur toute l'association (teamId = null)
+/// ou sur une seule équipe (teamId renseigné).
+model RoleAssignment {
+  id     String  @id @default(uuid())
+  userId String
+  roleId String
+  teamId String?
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  team Team? @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId, teamId])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Journal des actions sensibles : changement de droits, paiement, suppression de données.
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  action    String // ex. "role.assigned", "payment.refunded", "user.deleted"
+  target    String? // ex. "user:<id>"
+  details   Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}
